@@ -15,21 +15,24 @@ public class Main {
         System.out.println("Reto: Análisis de Rendimiento de Ofertas");
 
         // Datos de ofertas (inicialmente hardcodeados, ¡debe leerse de un archivo!)
-        Oferta[] ofertas = new Oferta[] {
-            new Oferta("ProductoA", "Electrónicos", 100, 120),
-            new Oferta("ProductoB", "Ropa", 50, 75),
-            new Oferta("ProductoC", "Electrónicos", 200, 250),
-            new Oferta("ProductoD", "Hogar", 80, 100)
-        };
+        // Oferta[] ofertas = new Oferta[] {
+        //     new Oferta("ProductoA", "Electrónicos", 100, 120),
+        //     new Oferta("ProductoB", "Ropa", 50, 75),
+        //     new Oferta("ProductoC", "Electrónicos", 200, 250),
+        //     new Oferta("ProductoD", "Hogar", 80, 100)
+        // };
 
-        // Aquí deberías leer las ofertas desde un archivo
-        // Oferta[] ofertas = leerOfertasDesdeArchivo("ruta/al/archivo.csv");
-        // Oferta[] ofertas = leerOfertasDesdeArchivo("data.csv");
+        Oferta[] ofertas = leerOfertasDesdeArchivo("data.csv");
+        List<Criterio> criterios = new ArrayList<>();
+        criterios.add(new Criterio(50, "Alta Efectividad", Operator.GREATER_THAN_OR_EQUAL));
+        criterios.add(new Criterio(25, "Efectividad Media"));
+        criterios.add(new Criterio(10, "Efectividad Aceptable"));
+        criterios.add(new Criterio(5, "Baja Efectividad"));
 
         // Analizar y clasificar ofertas
         for (Oferta oferta : ofertas) {
             double margenGanancia = oferta.calcularMargenGanancia();
-            String clasificacion = oferta.clasificarOferta();
+            String clasificacion = oferta.clasificarOferta(criterios);
 
             System.out.println("Oferta: " + oferta.getNombre() +
                                ", Categoría: " + oferta.getCategoria() +
@@ -38,7 +41,6 @@ public class Main {
         }
     }
 
-    // Método para leer ofertas desde un archivo (¡implementar!)
     public static Oferta[] leerOfertasDesdeArchivo(String rutaArchivo) {
         List<Oferta> ofertas = new ArrayList<>();
         
@@ -100,9 +102,27 @@ class Oferta {
         return ((precio - costo) / costo) * 100;
     }
 
-    public String clasificarOferta() {
+    public String clasificarOferta(List<Criterio> criterios) {
         double margen = calcularMargenGanancia();
-        // TODO: Permitir que los criterios de clasificación sean configurables
+
+        if (criterios.isEmpty()) {
+            return criteriosPorDefecto(margen);
+        }
+
+        for (Criterio criterio : criterios) {
+            if (criterio.cumpleCriterio(margen)) {
+                return criterio.getClasificacion();
+            }
+        }
+
+        return "Sin clasificación, apartir de los criterios dados";
+    }
+
+    public String clasificarOferta() {
+        return clasificarOferta(new ArrayList<>());
+    }
+
+    private String criteriosPorDefecto(double margen) {
         if (margen > 25) {
             return "Alta Efectividad";
         } else if (margen > 10) {
@@ -134,5 +154,56 @@ class OfertaMapper {
         }
         
         return new Oferta(nombre, categoria, costo, precio);
+    }
+}
+
+enum Operator {
+    EQUAL,
+    GREATER_THAN,
+    LESS_THAN,
+    GREATER_THAN_OR_EQUAL,
+    LESS_THAN_OR_EQUAL
+}
+
+class Criterio {
+    private double margen;
+    private String clasificacion;
+    private Operator operator;
+
+    public Criterio(double margen, String clasificacion, Operator operator) {
+        this.margen = margen;
+        this.clasificacion = clasificacion;
+        this.operator = operator;
+    }
+
+    public Criterio(double margen, String clasificacion) {
+        this.margen = margen;
+        this.clasificacion = clasificacion;
+        operator = Operator.GREATER_THAN;
+    }
+
+    public double getMargen() {
+        return margen;
+    }
+
+    public String getClasificacion() {
+        return clasificacion;
+    }
+
+    public boolean cumpleCriterio(double margenToMatch) {
+        switch (operator) {
+            case EQUAL:
+                return margen == margenToMatch;
+            case GREATER_THAN:
+                return margenToMatch > margen;
+            case LESS_THAN:
+                return margenToMatch < margen;
+            case GREATER_THAN_OR_EQUAL:
+                return margenToMatch >= margen;
+            case LESS_THAN_OR_EQUAL:
+                return margenToMatch <= margen;
+            default:
+                return false;
+        }
     }
 }
