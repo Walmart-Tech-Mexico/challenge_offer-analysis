@@ -1,3 +1,9 @@
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 public class Main {
     public static void main(String[] args) {
         // Reto para el desarrollador:
@@ -8,20 +14,20 @@ public class Main {
         System.out.println("Reto: Análisis de Rendimiento de Ofertas");
 
         // Datos de ofertas (inicialmente hardcodeados, ¡debe leerse de un archivo!)
-        Oferta[] ofertas = new Oferta[] {
-            new Oferta("ProductoA", "Electrónicos", 100, 120),
-            new Oferta("ProductoB", "Ropa", 50, 75),
-            new Oferta("ProductoC", "Electrónicos", 200, 250),
-            new Oferta("ProductoD", "Hogar", 80, 100)
-        };
+//        Oferta[] ofertas = new Oferta[] {
+//            new Oferta("ProductoA", "Electrónicos", 100, 120),
+//            new Oferta("ProductoB", "Ropa", 50, 75),
+//            new Oferta("ProductoC", "Electrónicos", 200, 250),
+//            new Oferta("ProductoD", "Hogar", 80, 100)
+//        };
 
         // Aquí deberías leer las ofertas desde un archivo
-        // Oferta[] ofertas = leerOfertasDesdeArchivo("ruta/al/archivo.csv");
+        Oferta[] ofertas = leerOfertasDesdeArchivo("./ofertas.csv");
 
         // Analizar y clasificar ofertas
         for (Oferta oferta : ofertas) {
             double margenGanancia = oferta.calcularMargenGanancia();
-            String clasificacion = oferta.clasificarOferta();
+            String clasificacion = oferta.clasificarOferta(25,10);
 
             System.out.println("Oferta: " + oferta.getNombre() +
                                ", Categoría: " + oferta.getCategoria() +
@@ -31,10 +37,28 @@ public class Main {
     }
 
     // Método para leer ofertas desde un archivo (¡implementar!)
-    // public static Oferta[] leerOfertasDesdeArchivo(String rutaArchivo) {
+    public static Oferta[] leerOfertasDesdeArchivo(String rutaArchivo) {
     //     // TODO: Implementar la lógica para leer el archivo y crear objetos Oferta
-    //     return null;
-    // }
+        List<Oferta> ofertas = new ArrayList<>();
+        String separator=",";
+        int errors=0;
+        try(BufferedReader br = new BufferedReader(new FileReader(rutaArchivo))) {
+            while (br.ready()) {
+                String[] tokens= br.readLine().split(separator);
+                if(tokens.length!=4){
+                    System.out.println("Error al parsear oferta" + Arrays.toString(tokens));
+                    errors++;
+                    continue;
+                }
+                ofertas.add(new Oferta(tokens[0].trim(), tokens[1].trim(), Integer.parseInt(tokens[2].trim()), Integer.parseInt(tokens[3].trim())));
+            }
+        } catch (Exception e) {
+            System.out.println("Error al abrir el archivo");
+            e.printStackTrace();
+        }
+        System.out.println(String.format("Se han harcodeado %s ofertas exitosamente y se encontro error en %s ofertas",ofertas.size(), errors));
+        return ofertas.toArray(new Oferta[ofertas.size()]);
+    }
 }
 
 class Oferta {
@@ -62,12 +86,12 @@ class Oferta {
         return ((precio - costo) / costo) * 100;
     }
 
-    public String clasificarOferta() {
+    public String clasificarOferta(int umbralMargenAlta,int umbralMargenMedia) {
         double margen = calcularMargenGanancia();
         // TODO: Permitir que los criterios de clasificación sean configurables
-        if (margen > 25) {
+        if (margen > umbralMargenAlta) {
             return "Alta Efectividad";
-        } else if (margen > 10) {
+        } else if (margen > umbralMargenMedia) {
             return "Efectividad Media";
         } else {
             return "Baja Efectividad";
